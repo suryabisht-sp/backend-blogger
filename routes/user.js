@@ -1,6 +1,6 @@
 const express= require( "express")
 const router = express.Router()
-const { signInPost } = require("../controller/userGet")
+const { signInPost, forgetPassword, resetPassword } = require("../controller/userGet")
 const { signUpPost } = require("../controller/userGet.js")
 const { postBlog } = require("../controller/blog.js")
 const multer = require('multer');
@@ -21,6 +21,7 @@ const upload = multer({ storage: storage })
 router.post("/signin", signInPost)
 router.post("/signup", signUpPost)
 router.post('/upload-blog', upload.single('coverImageUrl'), postBlog);
-
+router.post("/forgetpassword", forgetPassword)
+router.post("/resetpassword/:token?", resetPassword)
 
 module.exports= router

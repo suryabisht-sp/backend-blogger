@@ -16,8 +16,13 @@ function createToken(user) {
 }
 
 function validateToken(token) {
+  try {
   const payload = JWT.verify(token, secret)
-  return payload
+  return {payload}
+  }
+  catch (error) {
+    return ("Invalid Token or Expired Token")
+  }
 }
 
 module.exports={validateToken, createToken}
