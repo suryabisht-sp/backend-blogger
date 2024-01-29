@@ -76,7 +76,7 @@ userSchema.static("forgetpass", async function (email){
       { email },
       {
         $set: {
-          passResetToken: createHmac('sha256', salt).update(resetToken).digest("hex"),
+          passResetToken: createHmac('sha256', salt).update(resetToken).digest("hex"),          
           passwordResetTime: new Date(Date.now() + 30 * 60 * 1000)
         }
       },

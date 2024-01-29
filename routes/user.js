@@ -22,6 +22,6 @@ router.post("/signin", signInPost)
 router.post("/signup", signUpPost)
 router.post('/upload-blog', upload.single('coverImageUrl'), postBlog);
 router.post("/forgetpassword", forgetPassword)
-router.post("/resetpassword/:token?", resetPassword)
+router.post("/resetpassword/", resetPassword)
 
 module.exports= router
