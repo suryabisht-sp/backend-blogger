@@ -8,9 +8,26 @@ async function getBlogDetail(req, res, next) {
   return res.status(200).send({ result, comments });
 }
 
+async function getDraftDetail(req, res, next) {
+  const result = await Blog.findById(req.params.id).populate("createdBy")
+  return res.status(200).send({ result });
+}
+
+async function getAllBlogsOfUser(req, res, next) {
+  try {
+    const userId = req.params.id;
+    // Find all blogs posted by the user
+    const blogs = await Blog.find({ createdBy: userId }).populate("createdBy");
+    return res.status(200).send({ blogs });
+  } catch (error) {
+    console.error('Error in getAllBlogsOfUser:', error);
+    return res.status(500).send({ error: 'Internal Server Error' });
+  }
+}
+
 async function postBlog(req, res, next) {
 try {
-    const { title, body, createdBy } = req.body;
+    const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and Body are required fields' });
     }
@@ -20,11 +37,17 @@ try {
   const fileName = path.basename(req.file.path);
       coverImageUrl = `/uploads/${fileName}`;
     }
-    const result = await Blog.create({
+     const result = await Blog.create({
       title,
       body,
-      createdBy: createdBy.toString(), // Assuming you have a user in your request object
+      createdBy: createdBy.toString(),
       coverImageUrl,
+      location,
+      commentsAllowed,
+      publishedDate,
+      publishedTime, 
+      draft: false      
+
     });
     return res.status(201).json(result);
   } catch (error) {
@@ -42,16 +65,12 @@ try {
     let coverImageUrl;
     // Check if the request contains a file (image)
     if (req.file) {
-  const fileName = path.basename(req.file.path);
-      coverImageUrl = `/uploads/${fileName}`;
-    }
-    const result = await Blog.create({
-      title,
-      body,
-      createdBy: createdBy.toString(), // Assuming you have a user in your request object
-      coverImageUrl,
-    });
-    return res.status(201).json(result);
+      const fileName = path.basename(req.file.path);     
+      coverImageUrl = `/uploads/${fileName}`;   
+    }  
+      const updatedBlog = await Blog.findByIdAndUpdate(req.params.blogId, { title: title, body:body, createdBy:createdBy, coverImageUrl:coverImageUrl, draft: false }, { new: true });
+    
+    return res.status(201).json(updatedBlog);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -123,4 +142,68 @@ async function editComment(req, res, next) {
   }
 }
 
-module.exports={getBlogDetail, postComment, postBlog, deletePost, blogSearch,editBlog, deleteComment, editComment}
+async function draftBlog(req, res, next) {
+try {
+  const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
+    if (!title || !body) {
+      return res.status(400).json({ error: 'Title and Body are required fields' });
+    }
+    let coverImageUrl;
+    // Check if the request contains a file (image)
+    if (req.file) {
+  const fileName = path.basename(req.file.path);
+      coverImageUrl = `/uploads/${fileName}`;
+    }
+    const result = await Blog.create({
+    title,
+      body,
+      createdBy: createdBy.toString(),
+      coverImageUrl,
+      location,
+      commentsAllowed,
+      publishedDate,
+      publishedTime,
+      draft: true      
+    });
+    return res.status(201).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+const updateUserProfile = async (req, res) => {
+  try {
+    // Extract user ID from the request (you should have this after user authentication)
+    const userId = req.user._id; // Assuming user ID is available in req.user after authentication
+    // Check if the user profile already exists
+    let userProfile = await UserProfile.findOne({ userId });
+    // If user profile does not exist, create a new one
+    if (!userProfile) {
+      userProfile = new UserProfile({ userId });
+    }
+    if (req.file) {
+      const fileName = path.basename(req.file.path);     
+      coverImageUrl = `/uploads/${fileName}`;   
+    }  
+    // Update user profile fields
+    userProfile.name = req.body.name;
+    userProfile.dob = req.body.dob;
+    userProfile.email = req.body.email;
+    userProfile.phoneNo = req.body.phoneNo;
+    userProfile.address = req.body.address;
+    userProfile.hobbies = req.body.hobbies;
+    userProfile.profilePhoto = req.body.profilePicUrl;
+    userProfile.bio = req.body.bio;
+    // Save the updated user profile
+    await userProfile.save();
+
+    // Respond with success message
+    return res.status(200).json({ success: true, message: 'User profile updated successfully' });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+
+module.exports={getBlogDetail, postComment, postBlog, deletePost, blogSearch,editBlog, deleteComment, editComment, draftBlog, getDraftDetail,getAllBlogsOfUser,updateUserProfile}

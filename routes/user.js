@@ -2,7 +2,7 @@ const express= require( "express")
 const router = express.Router()
 const { signInPost, forgetPassword, resetPassword } = require("../controller/userGet")
 const { signUpPost } = require("../controller/userGet.js")
-const { postBlog } = require("../controller/blog.js")
+const { postBlog, editBlog, updateUserProfile } = require("../controller/blog.js")
 const multer = require('multer');
 const path = require("path")
 
@@ -23,5 +23,7 @@ router.post("/signup", signUpPost)
 router.post('/upload-blog', upload.single('coverImageUrl'), postBlog);
 router.post("/forgetpassword", forgetPassword)
 router.post("/resetpassword/", resetPassword)
+router.patch('/edit/:blogId', upload.single('coverImageUrl'), editBlog);
+router.post('/upload-image', upload.single('profilePhoto'), updateUserProfile);
 
 module.exports= router
