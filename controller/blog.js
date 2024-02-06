@@ -1,6 +1,9 @@
 const Blog = require("../model/blog.js")
 const Comments = require("../model/comments.js")
 const path = require('path');
+const UserProfile = require("../model/profile.js");
+const userModel = require("../model/user.js");
+const { validateToken } = require("../utils/auth.js");
 
 async function getBlogDetail(req, res, next) {
   const result = await Blog.findById(req.params.id).populate("createdBy")
@@ -154,7 +157,7 @@ try {
   const fileName = path.basename(req.file.path);
       coverImageUrl = `/uploads/${fileName}`;
     }
-    const result = await Blog.create({
+    const result = await User.create({
     title,
       body,
       createdBy: createdBy.toString(),
@@ -172,27 +175,48 @@ try {
   }
 }
 const updateUserProfile = async (req, res) => {
+  const authHeader = req.header('Authorization');
+  const userId= req.body.userId
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Unauthorized - Token not provided' });
+  }
+
+  const tokenParts = authHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(401).json({ message: 'Unauthorized - Invalid token format' });
+  }
+  const token = tokenParts[1];
+  const check = await validateToken(token)
+  const emailId= check?.payload?.email
   try {
-    // Extract user ID from the request (you should have this after user authentication)
-    const userId = req.user._id; // Assuming user ID is available in req.user after authentication
+    if (emailId) {
+    }
     // Check if the user profile already exists
-    let userProfile = await UserProfile.findOne({ userId });
-    // If user profile does not exist, create a new one
+    //let userProfile = await UserProfile.findOne({ userId });
+
+    let userProfile = await userModel.findOne( {userId} );
+   // If user profile does not exist, create a new one
     if (!userProfile) {
       userProfile = new UserProfile({ userId });
     }
+    let profilePhoto
     if (req.file) {
       const fileName = path.basename(req.file.path);     
-      coverImageUrl = `/uploads/${fileName}`;   
+      profilePhoto = `/uploads/${fileName}`;   
     }  
     // Update user profile fields
     userProfile.name = req.body.name;
     userProfile.dob = req.body.dob;
     userProfile.email = req.body.email;
     userProfile.phoneNo = req.body.phoneNo;
-    userProfile.address = req.body.address;
+    userProfile.street = req.body.street;
+    userProfile.zip = req.body.zip;
+    userProfile.state = req.body.state;
+    userProfile.country = req.body.country;
+    userProfile.city = req.body.city;
     userProfile.hobbies = req.body.hobbies;
-    userProfile.profilePhoto = req.body.profilePicUrl;
+    userProfile.profilePhoto = profilePhoto
     userProfile.bio = req.body.bio;
     // Save the updated user profile
     await userProfile.save();

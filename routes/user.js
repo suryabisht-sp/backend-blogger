@@ -24,6 +24,6 @@ router.post('/upload-blog', upload.single('coverImageUrl'), postBlog);
 router.post("/forgetpassword", forgetPassword)
 router.post("/resetpassword/", resetPassword)
 router.patch('/edit/:blogId', upload.single('coverImageUrl'), editBlog);
-router.post('/upload-image', upload.single('profilePhoto'), updateUserProfile);
+router.put('/upload-image', upload.single('profilePhoto'), updateUserProfile);
 
 module.exports= router

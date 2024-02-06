@@ -5,6 +5,7 @@ const {createToken}=require("../utils/auth")
 const {
   createHmac, randomBytes
 } = require('crypto');
+// const { UserProfile } = require("./profile.js"); 
 const { error } = require("console");
 
 
@@ -29,6 +30,10 @@ const userSchema = new Schema({
   salt: {
     type: String,
   },
+  // profile: {
+  //   type: Schema.Types.ObjectId,
+  //   ref: UserProfile, // Correct reference
+  // },
   role: {
     type: String,
     enum: ["user", "Admin"],

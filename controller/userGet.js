@@ -1,9 +1,23 @@
 const userModel = require("../model/user");
 const { createToken, validateToken } = require("../utils/auth");
 const sendEmail = require("../utils/email")
+
+const emailValidator = (email) => {
+  // Use a regular expression for basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 async function signInPost(req, res, next) {
-  const { email, password } = req.body
-  const user = await userModel.findOne({ email })
+  const { email, password } = req.body;
+  // Validate email
+  if (!emailValidator(email)) {
+    return res.status(400).send({ error: "Invalid email format" });
+  }
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(401).send({ error: "User not found" });
+  }
   const userWithoutSensitiveInfo = {
     _id: user._id,
     fullname: user.fullname,
@@ -12,34 +26,36 @@ async function signInPost(req, res, next) {
     role: user.role,
   };
   try {
-    const token = await userModel.matchPassword(email, password)
-    console.log("token===================", token)
+    const token = await userModel.matchPassword(email, password);
     return res.status(200).send({ user: userWithoutSensitiveInfo, token });
   } catch (error) {
-    res.status(401).send({ error: "Incorrect Email or Password" })
+    res.status(401).send({ error: "Incorrect Email or Password" });
   }
 }
 
 async function signUpPost(req, res, next) {
   try {
-    const { fullname, email, password } = req.body
+    const { fullname, email, password } = req.body;
+    // Validate email
+    if (!emailValidator(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
     const result = await userModel.create({
       fullname,
       email,
       password
-    })
+    });
     const userWithoutSensitiveInfo = {
       _id: result._id,
       fullname: result.fullname,
       email: result.email,
-      profileImage: result.profileImage, // Include any other necessary fields
+      profileImage: result.profileImage,
       role: result.role,
     };
-
-    const token = createToken(result)
+    const token = createToken(result);
     res.status(201).json({ message: 'Signup successful', user: userWithoutSensitiveInfo, token: token });
   } catch (error) {
-    res.status(401).json({ error: "Incorrect Email or Password" })
+    res.status(401).json({ error: "Error in signup process" });
   }
 }
 

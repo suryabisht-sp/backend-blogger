@@ -10,7 +10,6 @@ const Blog= require('./model/blog.js');
 const blog = require('./routes/blog.js');
 const PORT = process.env.PORT
 const url = process.env.MONGODB_URL
-const bodyParser = require('body-parser');
 const { blogSearch } = require('./controller/blog.js');
 
 connectToDatabase(url)
@@ -21,7 +20,8 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 }
 // Enable CORS for all routes with specific options
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
+app.use(cors());
 // template engine
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json())
