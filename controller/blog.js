@@ -175,59 +175,64 @@ try {
   }
 }
 const updateUserProfile = async (req, res) => {
-  const authHeader = req.header('Authorization');
-  const userId= req.body.userId
+  console.log("reached here")
+  // const authHeader = req.header('Authorization');
+  const userId = req.body.userId;
+  const emailId =  req.body.email;
 
-  if (!authHeader) {
-    return res.status(401).json({ message: 'Unauthorized - Token not provided' });
-  }
-
-  const tokenParts = authHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(401).json({ message: 'Unauthorized - Invalid token format' });
-  }
-  const token = tokenParts[1];
-  const check = await validateToken(token)
-  const emailId= check?.payload?.email
   try {
     if (emailId) {
+      // Check if the user exists in the database
+      const existingUser = await userModel.findOne({ _id: userId });
+      if (!existingUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      // Check if the user profile already exists
+      let userProfile = await UserProfile.findOne({ userId });
+      // If user profile does not exist, create a new one
+      if (!userProfile) {
+        userProfile = new UserProfile({ userId });
+      }
+      let profilePhoto;
+      if (req.file) {
+        const fileName = path.basename(req.file.path);
+        profilePhoto = `/uploads/${fileName}`;
+      }
+      // Update user profile fields
+      userProfile.name = req.body.name;
+      userProfile.dob = req.body.dob;
+      userProfile.email = req.body.email;
+      userProfile.phoneNo = req.body.phoneNo;
+      userProfile.street = req.body.street;
+      userProfile.zip = req.body.zip;
+      userProfile.state = req.body.state;
+      userProfile.country = req.body.country;
+      userProfile.city = req.body.city;
+      userProfile.hobbies = req.body.hobbies;
+      userProfile.profilePicUrl = profilePhoto;
+      userProfile.bio = req.body.bio;
+      // Save the updated user profile
+      await userProfile.save();
+      return res.status(200).json({ success: true, message: 'User profile updated successfully'});
     }
-    // Check if the user profile already exists
-    //let userProfile = await UserProfile.findOne({ userId });
-
-    let userProfile = await userModel.findOne( {userId} );
-   // If user profile does not exist, create a new one
-    if (!userProfile) {
-      userProfile = new UserProfile({ userId });
-    }
-    let profilePhoto
-    if (req.file) {
-      const fileName = path.basename(req.file.path);     
-      profilePhoto = `/uploads/${fileName}`;   
-    }  
-    // Update user profile fields
-    userProfile.name = req.body.name;
-    userProfile.dob = req.body.dob;
-    userProfile.email = req.body.email;
-    userProfile.phoneNo = req.body.phoneNo;
-    userProfile.street = req.body.street;
-    userProfile.zip = req.body.zip;
-    userProfile.state = req.body.state;
-    userProfile.country = req.body.country;
-    userProfile.city = req.body.city;
-    userProfile.hobbies = req.body.hobbies;
-    userProfile.profilePhoto = profilePhoto
-    userProfile.bio = req.body.bio;
-    // Save the updated user profile
-    await userProfile.save();
-
-    // Respond with success message
-    return res.status(200).json({ success: true, message: 'User profile updated successfully' });
   } catch (error) {
     console.error('Error updating user profile:', error);
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
 
+const profileDetails = async (req, res) => {
+  console.log("rechd", req.body)
+  const userId = req.body.userId;
+  const emailId = req.body.email;
+  try {
+    if (emailId) {
+      let userProfile = await UserProfile.findOne({ userId });
+      return res.status(200).json({ success: true, userProfile })
+    }
+  } catch(error) {
+    console.log("error", error)}
+}
 
-module.exports={getBlogDetail, postComment, postBlog, deletePost, blogSearch,editBlog, deleteComment, editComment, draftBlog, getDraftDetail,getAllBlogsOfUser,updateUserProfile}
+
+module.exports={getBlogDetail, postComment, postBlog, deletePost, blogSearch,editBlog, deleteComment, editComment, draftBlog, getDraftDetail,getAllBlogsOfUser,updateUserProfile, profileDetails}
