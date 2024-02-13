@@ -60,8 +60,9 @@ try {
 }
 
 async function editBlog(req, res, next) {
+   console.log("contetns", req.body)
 try {
-    const { title, body, createdBy } = req.body;
+    const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and Body are required fields' });
     }
@@ -69,9 +70,9 @@ try {
     // Check if the request contains a file (image)
     if (req.file) {
       const fileName = path.basename(req.file.path);     
-      coverImageUrl = `/uploads/${fileName}`;   
+    coverImageUrl = `/uploads/${fileName}`;   
     }  
-      const updatedBlog = await Blog.findByIdAndUpdate(req.params.blogId, { title: title, body:body, createdBy:createdBy, coverImageUrl:coverImageUrl, draft: false }, { new: true });
+      const updatedBlog = await Blog.findByIdAndUpdate(req.params.blogId, { title: title, body:body, createdBy:createdBy, coverImageUrl:coverImageUrl, draft: false, location: location, commentsAllowed: commentsAllowed, publishedDate: publishedDate, publishedTime: publishedTime, }, { new: true });
     
     return res.status(201).json(updatedBlog);
   } catch (error) {
@@ -131,13 +132,11 @@ async function editComment(req, res, next) {
   try {
     const commentId = req.params.id;
     const { content } = req.body;
-    // Find the comment by ID and update its content
+      // Find the comment by ID and update its content
     const updatedComment = await Comments.findByIdAndUpdate(commentId, { content }, { new: true });
-
     if (!updatedComment) {
       return res.status(404).send('Comment not found');
     }
-
     res.status(200).json({ message: 'Comment successfully updated', updatedComment });
   } catch (error) {
     console.error(error);
@@ -157,8 +156,14 @@ try {
   const fileName = path.basename(req.file.path);
       coverImageUrl = `/uploads/${fileName}`;
     }
-    const result = await User.create({
-    title,
+  const id = req.params.id
+  if (id) {
+    const updatedBlog = await Blog.findByIdAndUpdate(id, { title: title, body: body, createdBy: createdBy, coverImageUrl: coverImageUrl, draft: true,location: location, commentsAllowed: commentsAllowed, publishedDate: publishedDate, publishedTime: publishedTime, }, { new: true });
+     return res.status(201).json(updatedBlog);
+  }
+  else {
+    const result = await Blog.create({
+      title,
       body,
       createdBy: createdBy.toString(),
       coverImageUrl,
@@ -166,69 +171,83 @@ try {
       commentsAllowed,
       publishedDate,
       publishedTime,
-      draft: true      
+      draft: true
     });
-    return res.status(201).json(result);
+     return res.status(201).json(result);
+  }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 const updateUserProfile = async (req, res) => {
-  console.log("reached here")
-  // const authHeader = req.header('Authorization');
+  console.log("Received data from frontend:", req.body);
   const userId = req.body.userId;
-  const emailId =  req.body.email;
+  const emailId = req.body.email;
 
   try {
-    if (emailId) {
-      // Check if the user exists in the database
-      const existingUser = await userModel.findOne({ _id: userId });
-      if (!existingUser) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      // Check if the user profile already exists
-      let userProfile = await UserProfile.findOne({ userId });
-      // If user profile does not exist, create a new one
-      if (!userProfile) {
-        userProfile = new UserProfile({ userId });
-      }
-      let profilePhoto;
-      if (req.file) {
-        const fileName = path.basename(req.file.path);
-        profilePhoto = `/uploads/${fileName}`;
-      }
-      // Update user profile fields
-      userProfile.name = req.body.name;
-      userProfile.dob = req.body.dob;
-      userProfile.email = req.body.email;
-      userProfile.phoneNo = req.body.phoneNo;
-      userProfile.street = req.body.street;
-      userProfile.zip = req.body.zip;
-      userProfile.state = req.body.state;
-      userProfile.country = req.body.country;
-      userProfile.city = req.body.city;
-      userProfile.hobbies = req.body.hobbies;
-      userProfile.profilePicUrl = profilePhoto;
-      userProfile.bio = req.body.bio;
-      // Save the updated user profile
-      await userProfile.save();
-      return res.status(200).json({ success: true, message: 'User profile updated successfully'});
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID is required' });
     }
+
+    // Check if the user exists in the database
+    const existingUser = await userModel.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let userProfile = await UserProfile.findOne({ userId });
+
+    // If user profile does not exist, create a new one
+    if (!userProfile) {
+      userProfile = new UserProfile();
+    }
+
+    // Update user profile fields
+    userProfile.name = req.body.name;
+    userProfile.dob = req.body.dob;
+    userProfile.email = req.body.email;
+    userProfile.phoneNo = req.body.phoneNo;
+    userProfile.street = req.body.street;
+    userProfile.zip = req.body.zip;
+    userProfile.state = req.body.state;
+    userProfile.country = req.body.country;
+    userProfile.city = req.body.city;
+    userProfile.hobbies = req.body.hobbies;
+    userProfile.bio = req.body.bio;
+    userProfile.userId = req.body.userId
+
+    // Update profile photo if file is uploaded
+    if (req.file) {
+      const fileName = path.basename(req.file.path);
+      userProfile.profilePicUrl = `/uploads/${fileName}`;
+    }
+
+    // Save the updated user profile
+    await userProfile.save();
+
+    return res.status(200).json({ success: true, message: 'User profile updated successfully' });
   } catch (error) {
     console.error('Error updating user profile:', error);
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
 
+
 const profileDetails = async (req, res) => {
-  console.log("rechd", req.body)
+  // console.log("rechd", req.body.userId)
   const userId = req.body.userId;
   const emailId = req.body.email;
   try {
     if (emailId) {
       let userProfile = await UserProfile.findOne({ userId });
-      return res.status(200).json({ success: true, userProfile })
+      // console.log("uiserprofil----", userProfile)
+      if (userProfile) {
+        return res.status(200).json({ success: true, userProfile })
+      }
+      else {
+        return res.status(404).json({ success: false })
+      }
     }
   } catch(error) {
     console.log("error", error)}

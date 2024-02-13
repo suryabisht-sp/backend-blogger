@@ -14,14 +14,14 @@ const { blogSearch } = require('./controller/blog.js');
 
 connectToDatabase(url)
 const corsOptions = {
-  origin: 'http://localhost:8000',
+  origin: 'http://localhost:3000',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,
 }
 // Enable CORS for all routes with specific options
 // app.use(cors(corsOptions));
-app.use(cors());
+app.use(cors(corsOptions));
 // template engine
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json())

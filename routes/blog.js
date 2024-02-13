@@ -23,7 +23,7 @@ blog.post('/comment/:blogId', postComment)
 blog.patch('/edit/:id', editBlog)
 blog.delete("/deleteComment/:id", deleteComment)
 blog.patch("/editComment/:id", editComment)
-blog.post("/draft", upload.single('coverImageUrl'), draftBlog)
+blog.post("/draft/:id?", upload.single('coverImageUrl'), draftBlog)
 blog.get("/draft/:id?", getDraftDetail)
 blog.get("/alldrafts/:id", getAllBlogsOfUser)
 module.exports = blog
