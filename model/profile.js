@@ -4,10 +4,28 @@ const userModel = require("./user")
 
 const userProfileSchema = new Schema({
   userId: {
-    type: Schema.Types.ObjectId,
-    ref: userModel
+    type: String,
+    required: true
   },
   name: {
+    type: String,
+  },
+    role: {
+    type: String,
+  },
+      google: {
+    type: String,
+  },
+        git: {
+    type: String,
+  },
+          twitter: {
+    type: String,
+  },
+            instagram: {
+    type: String,
+  },
+              facebook: {
     type: String,
   },
   dob: {
@@ -25,6 +43,12 @@ const userProfileSchema = new Schema({
     type: String,
   },
   city: {
+    type: String,
+  },
+    company: {
+    type: String,
+  },
+      linkedin: {
     type: String,
   },
   state: {

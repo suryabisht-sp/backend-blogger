@@ -1,13 +1,11 @@
 const mongoose = require("mongoose")
-
 const { Schema } = require("mongoose")
 const {createToken}=require("../utils/auth") 
 const {
   createHmac, randomBytes
 } = require('crypto');
-// const { UserProfile } = require("./profile.js"); 
 const { error } = require("console");
-
+const UserProfile = require ("./profile.js")
 
 const userSchema = new Schema({
   fullname: {
@@ -30,10 +28,10 @@ const userSchema = new Schema({
   salt: {
     type: String,
   },
-  // profile: {
-  //   type: Schema.Types.ObjectId,
-  //   ref: UserProfile, // Correct reference
-  // },
+  profile: {
+    type: Schema.Types.ObjectId,
+    ref: UserProfile   
+  },
   role: {
     type: String,
     enum: ["user", "Admin"],

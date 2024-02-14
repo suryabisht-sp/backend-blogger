@@ -216,6 +216,16 @@ const updateUserProfile = async (req, res) => {
     userProfile.hobbies = req.body.hobbies;
     userProfile.bio = req.body.bio;
     userProfile.userId = req.body.userId
+      userProfile.git = req.body.git
+      userProfile.userId = req.body.userId
+    userProfile.instagram = req.body.instagram
+    userProfile.facebook = req.body.facebook
+    userProfile.role = req.body.role
+    userProfile.twitter = req.body.twitter
+      userProfile.google = req.body.google
+      userProfile.google = req.body.google
+      userProfile.linkedin = req.body.linkedin
+      userProfile.company = req.body.company 
 
     // Update profile photo if file is uploaded
     if (req.file) {
