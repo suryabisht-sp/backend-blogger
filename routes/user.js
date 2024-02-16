@@ -1,6 +1,6 @@
 const express= require( "express")
 const router = express.Router()
-const { signInPost, forgetPassword, resetPassword } = require("../controller/userGet")
+const { signInPost, forgetPassword, resetPassword, deactivateAccount } = require("../controller/userGet")
 const { signUpPost } = require("../controller/userGet.js")
 const { postBlog, editBlog, updateUserProfile, profileDetails } = require("../controller/blog.js")
 const multer = require('multer');
@@ -26,5 +26,6 @@ router.post("/resetpassword/", resetPassword)
 router.patch('/edit/:blogId', upload.single('coverImageUrl'), editBlog);
 router.put('/upload-image', upload.single('profilePhoto'), updateUserProfile);
 router.post('/getprofile', profileDetails);
+router.post('/deactivate', deactivateAccount)
 
 module.exports= router

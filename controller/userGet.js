@@ -9,7 +9,7 @@ const emailValidator = (email) => {
 };
 
 async function signInPost(req, res, next) {
-  const { email, password } = req.body;
+  const { email, password, date } = req.body;
   // Validate email
   if (!emailValidator(email)) {
     return res.status(400).send({ error: "Invalid email format" });
@@ -26,8 +26,13 @@ async function signInPost(req, res, next) {
     role: user.role,
   };
   try {
-    const token = await userModel.matchPassword(email, password);
-    return res.status(200).send({ user: userWithoutSensitiveInfo, token });
+    const token = await userModel.matchPassword(email, password, date);
+    if (token?.deactivated) {
+        return res.status(404).send({ message: token?.message});
+    }
+    else {
+      return res.status(200).send({ user: userWithoutSensitiveInfo, token: token.token? token?.token: token, message: token?.message? token?.message: "Login success" });
+    }
   } catch (error) {
     res.status(401).send({ error: "Incorrect Email or Password" });
   }
@@ -59,14 +64,13 @@ async function signUpPost(req, res, next) {
   }
 }
 
-
 async function forgetPassword(req, res, next) {
   try {
     const { email } = req.body
     const user = await userModel.findOne({ email })
     const token = await userModel.forgetpass(email)
     const resetURL = `https://frontend-blogger-3fp5qnot3-suryabisht-sp.vercel.app/user/resetPassword/forgetToken=${token.passToken}`
-    const message = `We have received a password reset request, please use below link to set your password. It will expire in 10 mins \n\n${resetURL}\n\n`
+    const message = `We have received a password reset request, please use below link to set your password. It will expire in 30 mins \n\n${resetURL}\n\n`
     try {
       await sendEmail({
         email: email,
@@ -76,9 +80,9 @@ async function forgetPassword(req, res, next) {
       res.status(200).json({ status: "success", message: "password sent succefully" })
     } catch (err) {
       user.passwordResetTime = undefined,
-        user.passResetToken = undefined
+      user.passResetToken = undefined
       user.save({ validateBeforeSave: false })
-      return next(new Error("There was an error sending email. Please try later"))
+      return next (err)      // return next(new Error("There was an error sending email. Please try later"))
     }
   }
   catch (error) {
@@ -89,7 +93,6 @@ async function resetPassword(req, res, next) {
   const { password, cPassword } = req.body
   const plainToken = req.query.forgetToken
   const token = req.query.token
-
   try {
     if (password !== cPassword) {
       return res.status(401).send({ "msj": "password didn't matched" })
@@ -133,6 +136,38 @@ async function resetPassword(req, res, next) {
     console.log("error--------------", error)
   }
 }
+async function deactivateAccount(req, res, next) {
+  const { flag, token } = req.body;  
+  try {
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }    
+    const check = await validateToken(token);    
+    if (!check || !check.payload || !check.payload._id) {
+      return res.status(400).json({ error: "Invalid token format" });
+    }    
+    const userId = check.payload._id;
+    let updateData = {
+      "status.deactivate": true
+    };
+    if (flag) {
+      // Add 15 days to the current date
+      const currentDate = new Date();
+      const futureDate = new Date(currentDate);
+      futureDate.setDate(futureDate.getDate()+15);
+      // Update the request date
+      updateData["status.reqDate"] = futureDate;
+    }
+    const result = await userModel.updateOne({ _id: userId }, { $set: updateData });
+    if (result.nModified === 0) {
+      return res.status(404).json({ error: "User not found or no changes applied" });
+    }
+    return res.status(200).json({ message: "Request for deletion of account is accepted" });
+  } catch (error) {
+    console.log("error--------------", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
 
 
 
@@ -141,4 +176,4 @@ async function resetPassword(req, res, next) {
 
 
 
-module.exports = { signInPost, signUpPost, forgetPassword, resetPassword }
+module.exports = { signInPost, signUpPost, forgetPassword, resetPassword, deactivateAccount }

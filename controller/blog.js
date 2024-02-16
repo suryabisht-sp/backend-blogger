@@ -7,7 +7,7 @@ const { validateToken } = require("../utils/auth.js");
 
 async function getBlogDetail(req, res, next) {
   const result = await Blog.findById(req.params.id).populate("createdBy")
-  const comments = await Comments.find({ blogId: req.params.id }).populate({path:"createdBy",select: "-password -salt"}).sort({ createdAt: -1 });
+  const comments = await Comments.find({ blogId: req.params.id }).populate({ path: "createdBy", select: "-password -salt" }).sort({ createdAt: -1 });
   return res.status(200).send({ result, comments });
 }
 
@@ -29,7 +29,7 @@ async function getAllBlogsOfUser(req, res, next) {
 }
 
 async function postBlog(req, res, next) {
-try {
+  try {
     const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and Body are required fields' });
@@ -37,10 +37,10 @@ try {
     let coverImageUrl;
     // Check if the request contains a file (image)
     if (req.file) {
-  const fileName = path.basename(req.file.path);
+      const fileName = path.basename(req.file.path);
       coverImageUrl = `/uploads/${fileName}`;
     }
-     const result = await Blog.create({
+    const result = await Blog.create({
       title,
       body,
       createdBy: createdBy.toString(),
@@ -48,8 +48,8 @@ try {
       location,
       commentsAllowed,
       publishedDate,
-      publishedTime, 
-      draft: false      
+      publishedTime,
+      draft: false
 
     });
     return res.status(201).json(result);
@@ -60,8 +60,8 @@ try {
 }
 
 async function editBlog(req, res, next) {
-   console.log("contetns", req.body)
-try {
+  console.log("contetns", req.body)
+  try {
     const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and Body are required fields' });
@@ -69,11 +69,11 @@ try {
     let coverImageUrl;
     // Check if the request contains a file (image)
     if (req.file) {
-      const fileName = path.basename(req.file.path);     
-    coverImageUrl = `/uploads/${fileName}`;   
-    }  
-      const updatedBlog = await Blog.findByIdAndUpdate(req.params.blogId, { title: title, body:body, createdBy:createdBy, coverImageUrl:coverImageUrl, draft: false, location: location, commentsAllowed: commentsAllowed, publishedDate: publishedDate, publishedTime: publishedTime, }, { new: true });
-    
+      const fileName = path.basename(req.file.path);
+      coverImageUrl = `/uploads/${fileName}`;
+    }
+    const updatedBlog = await Blog.findByIdAndUpdate(req.params.blogId, { title: title, body: body, createdBy: createdBy, coverImageUrl: coverImageUrl, draft: false, location: location, commentsAllowed: commentsAllowed, publishedDate: publishedDate, publishedTime: publishedTime, }, { new: true });
+
     return res.status(201).json(updatedBlog);
   } catch (error) {
     console.error(error);
@@ -81,47 +81,47 @@ try {
   }
 }
 
-async function deletePost(req, res, next) { 
-try {
+async function deletePost(req, res, next) {
+  try {
     const blogId = req.params.id
-   await Blog.findOneAndDelete({_id:blogId})
-   await Comments.deleteMany({ blogId });
-  res.status(200).send("Successfully deleted")
+    await Blog.findOneAndDelete({ _id: blogId })
+    await Comments.deleteMany({ blogId });
+    res.status(200).send("Successfully deleted")
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 }
 
-async function blogSearch(req, res, next) { 
+async function blogSearch(req, res, next) {
   const result = await Blog.find();
-   try{
-   const { search } = req.query;
-     const searchLowerCase = search.toLowerCase();
+  try {
+    const { search } = req.query;
+    const searchLowerCase = search.toLowerCase();
     // Filter the data to include only blogs with titles containing the search term (case-insensitive)
-     const filteredData = result.filter(blog => blog.title.toLowerCase().includes(searchLowerCase)); 
-   return res.status(200).send({data: filteredData })
-    } catch (error) {
-    return res.status(301).send({error})
+    const filteredData = result.filter(blog => blog.title.toLowerCase().includes(searchLowerCase));
+    return res.status(200).send({ data: filteredData })
+  } catch (error) {
+    return res.status(301).send({ error })
   }
 }
 
-async function postComment(req, res, next){
+async function postComment(req, res, next) {
   const { blogId, content, createdBy } = req.body
-  await Comments.create({    
+  await Comments.create({
     content: content,
     blogId: blogId,
     createdBy: createdBy?.toString(),
     createdAt: Date.now(),
   })
-   return res.status(200).send({msj:"Comment posted Successfully"})
+  return res.status(200).send({ msj: "Comment posted Successfully" })
 }
 
-async function deleteComment(req, res, next) { 
-try {
+async function deleteComment(req, res, next) {
+  try {
     const commentId = req.params.id
-   await Comments.findOneAndDelete({_id:commentId})
-   res.status(200).send("Successfully deleted")
+    await Comments.findOneAndDelete({ _id: commentId })
+    res.status(200).send("Successfully deleted")
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
@@ -132,7 +132,7 @@ async function editComment(req, res, next) {
   try {
     const commentId = req.params.id;
     const { content } = req.body;
-      // Find the comment by ID and update its content
+    // Find the comment by ID and update its content
     const updatedComment = await Comments.findByIdAndUpdate(commentId, { content }, { new: true });
     if (!updatedComment) {
       return res.status(404).send('Comment not found');
@@ -145,36 +145,36 @@ async function editComment(req, res, next) {
 }
 
 async function draftBlog(req, res, next) {
-try {
-  const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
+  try {
+    const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and Body are required fields' });
     }
     let coverImageUrl;
     // Check if the request contains a file (image)
     if (req.file) {
-  const fileName = path.basename(req.file.path);
+      const fileName = path.basename(req.file.path);
       coverImageUrl = `/uploads/${fileName}`;
     }
-  const id = req.params.id
-  if (id) {
-    const updatedBlog = await Blog.findByIdAndUpdate(id, { title: title, body: body, createdBy: createdBy, coverImageUrl: coverImageUrl, draft: true,location: location, commentsAllowed: commentsAllowed, publishedDate: publishedDate, publishedTime: publishedTime, }, { new: true });
-     return res.status(201).json(updatedBlog);
-  }
-  else {
-    const result = await Blog.create({
-      title,
-      body,
-      createdBy: createdBy.toString(),
-      coverImageUrl,
-      location,
-      commentsAllowed,
-      publishedDate,
-      publishedTime,
-      draft: true
-    });
-     return res.status(201).json(result);
-  }
+    const id = req.params.id
+    if (id) {
+      const updatedBlog = await Blog.findByIdAndUpdate(id, { title: title, body: body, createdBy: createdBy, coverImageUrl: coverImageUrl, draft: true, location: location, commentsAllowed: commentsAllowed, publishedDate: publishedDate, publishedTime: publishedTime, }, { new: true });
+      return res.status(201).json(updatedBlog);
+    }
+    else {
+      const result = await Blog.create({
+        title,
+        body,
+        createdBy: createdBy.toString(),
+        coverImageUrl,
+        location,
+        commentsAllowed,
+        publishedDate,
+        publishedTime,
+        draft: true
+      });
+      return res.status(201).json(result);
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -216,16 +216,16 @@ const updateUserProfile = async (req, res) => {
     userProfile.hobbies = req.body.hobbies;
     userProfile.bio = req.body.bio;
     userProfile.userId = req.body.userId
-      userProfile.git = req.body.git
-      userProfile.userId = req.body.userId
+    userProfile.git = req.body.git
+    userProfile.userId = req.body.userId
     userProfile.instagram = req.body.instagram
     userProfile.facebook = req.body.facebook
     userProfile.role = req.body.role
     userProfile.twitter = req.body.twitter
-      userProfile.google = req.body.google
-      userProfile.google = req.body.google
-      userProfile.linkedin = req.body.linkedin
-      userProfile.company = req.body.company 
+    userProfile.google = req.body.google
+    userProfile.google = req.body.google
+    userProfile.linkedin = req.body.linkedin
+    userProfile.company = req.body.company
 
     // Update profile photo if file is uploaded
     if (req.file) {
@@ -259,9 +259,10 @@ const profileDetails = async (req, res) => {
         return res.status(404).json({ success: false })
       }
     }
-  } catch(error) {
-    console.log("error", error)}
+  } catch (error) {
+    console.log("error", error)
+  }
 }
 
 
-module.exports={getBlogDetail, postComment, postBlog, deletePost, blogSearch,editBlog, deleteComment, editComment, draftBlog, getDraftDetail,getAllBlogsOfUser,updateUserProfile, profileDetails}
+module.exports = { getBlogDetail, postComment, postBlog, deletePost, blogSearch, editBlog, deleteComment, editComment, draftBlog, getDraftDetail, getAllBlogsOfUser, updateUserProfile, profileDetails }

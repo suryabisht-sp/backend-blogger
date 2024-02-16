@@ -38,7 +38,16 @@ const userSchema = new Schema({
     default: "user"
   },
   passwordResetTime: { type: Date},
-  passResetToken: { type: String }
+  passResetToken: { type: String },
+  status: {
+    reqDate: {
+      type: Date,      
+    },
+    deactivate: {
+      type: Boolean,
+      default: false
+    }
+  }
 })
 
 
@@ -52,9 +61,52 @@ userSchema.pre("save", function (next) {
   next()
 })
 
-userSchema.static("matchPassword", async function (email, password) {
+userSchema.static("matchPassword", async function (email, password, date) {
   const user = await this.findOne({ email });
+  const status = user?.status?.deactivate
+  const time = user?.status?.reqDate
+  const userId = user?._id
+  const username= user?.fullname
+  console.log("user,", user)
   if (!user) throw new Error("user not found");
+  if (status) {
+    let updateData = {
+      "status.deactivate": false
+    };
+
+function formatDate(date) {
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // January is 0!
+  const yyyy = date.getFullYear();
+  return dd + '/' + mm + '/' + yyyy;
+}
+
+function calculateDateDifferenceAndFormat(date1, date2) {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  const differenceMs = Math.abs(d1 - d2);
+  const differenceDays = Math.ceil(differenceMs / (1000 * 60 * 60 * 24));
+ return differenceDays
+   }
+   if (calculateDateDifferenceAndFormat(time, date) <= 15) {
+      const result = await userModel.updateOne({ _id: userId }, { $set: updateData });
+      const salt = user.salt;
+      const hashPassword = user.password
+      const userprovided = createHmac('sha256', salt).update(password).digest("hex")
+      if (result.nModified === 0) {
+      return res.status(404).json({ error: "User not found or no changes applied" });
+    }    
+        if (hashPassword !== userprovided) {
+         throw new Error("invalid password")
+        }
+      const token = createToken(user)
+     return ({message:`Welcome back ${username}, your account has been re-activated`, token });
+    }
+      else {
+        const result = await userModel.findOneAndDelete({ _id: userId })
+       return{message: "Your account has been deleted, Kindly signup again to use the service", deactivated: true}
+    }    
+  }
   const salt = user.salt;
   const hashPassword = user.password
   const userprovided = createHmac('sha256', salt).update(password).digest("hex")
