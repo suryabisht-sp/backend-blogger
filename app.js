@@ -21,7 +21,7 @@ const corsOptions = {
 }
 // Enable CORS for all routes with specific options
 // app.use(cors(corsOptions));
-app.use(cors(corsOptions));
+app.use(cors());
 // template engine
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json())
