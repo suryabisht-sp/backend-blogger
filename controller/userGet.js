@@ -172,9 +172,6 @@ async function deactivateAccount(req, res, next) {
       updateData["status.reqDate"] = futureDate;
     }
     const result = await userModel.updateOne({ _id: userId }, { $set: updateData });
-    if (result.nModified === 0) {
-      return res.status(404).json({ error: "User not found or no changes applied" });
-    }
     return res.status(200).json({ message: "Request for deletion of account is accepted" });
   } catch (error) {
     console.log("error--------------", error);
