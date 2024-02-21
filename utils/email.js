@@ -29,7 +29,6 @@ const nodemailer = require("nodemailer")
 const sendEmail = async (option) => {
   
   // transporter
- 
   const transporter = nodemailer.createTransport({
   //    host: "smtp.forwardemail.net",
   //   port: 465,

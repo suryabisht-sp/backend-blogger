@@ -8,6 +8,12 @@ const emailValidator = (email) => {
   return emailRegex.test(email);
 };
 
+
+async function allUsers(req, res, next){
+  const result = await userModel.find({}).select('-salt -password').sort({ role: 1 })
+  res.status(200).json({"data":result})
+}
+
 async function signInPost(req, res, next) {
   const { email, password, date } = req.body;
   // Validate email
@@ -18,17 +24,23 @@ async function signInPost(req, res, next) {
   if (!user) {
     return res.status(401).send({ error: "User not found" });
   }
+  const userStatus= user.concern
   const userWithoutSensitiveInfo = {
     _id: user._id,
     fullname: user.fullname,
     email: user.email,
     profileImage: user.profileImage,
     role: user.role,
+    concern: user.concern,
+    status: user.status
   };
   try {
     const token = await userModel.matchPassword(email, password, date);
     if (token?.deactivated) {
         return res.status(404).send({ message: token?.message});
+    }
+    else if (userStatus === "suspended") {
+      return res.status(401).send({ user:userWithoutSensitiveInfo , message: "You account has been suspended, Kindly contact admin" });
     }
     else {
       return res.status(200).send({ user: userWithoutSensitiveInfo, token: token.token? token?.token: token, message: token?.message? token?.message: "Login success" });
@@ -40,7 +52,7 @@ async function signInPost(req, res, next) {
 
 async function signUpPost(req, res, next) {
   try {
-    const { fullname, email, password } = req.body;
+    const { fullname, email, password, creationDate } = req.body;
     // Validate email
     if (!emailValidator(email)) {
       return res.status(400).json({ error: "Invalid email format" });
@@ -48,7 +60,8 @@ async function signUpPost(req, res, next) {
     const result = await userModel.create({
       fullname,
       email,
-      password
+      password,
+      creationDate
     });
     const userWithoutSensitiveInfo = {
       _id: result._id,
@@ -169,11 +182,59 @@ async function deactivateAccount(req, res, next) {
   }
 }
 
+async function deleteAccount(req, res, next) {
+  const { id, token } = req.body;  
+  try {
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }    
+    const check = await validateToken(token);    
+    if (!check || !check.payload || !check.payload._id) {
+      return res.status(400).json({ error: "Invalid token format" });
+    }    
+    const result = await userModel.findOneAndDelete({ _id: id })
+       return res.status(201).json({ message: "Account deleted successfully" });
+  } catch (error) {
+     return res.status(500).json({ error: "Internal server error" });
+  }
+ }
+
+
+async function suspendAccount(req, res, next) {
+    const { token, id  } = req.body;  
+  try {
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }    
+    const check = await validateToken(token);    
+    if (!check || !check.payload || !check.payload._id) {
+      return res.status(400).json({ error: "Invalid token format" });
+    } 
+    
+    const user = await userModel.findOne({ _id: id })
+    console.log("user=======", user)
+    const userConcern= user.concern
+    const userId = check.payload._id;
+    if (userConcern === "suspended") {
+       let updateData = {
+      "concern": "active"
+    };
+      const result = await userModel.updateOne({ _id: id }, { $set: updateData });
+       return res.status(200).json({ message: "Suspension has been invoked" });
+    }    
+    let updateData = {
+      "concern": "suspended"
+    };
+    const result = await userModel.updateOne({ _id: id }, { $set: updateData });
+    if (result.nModified === 0) {
+      return res.status(404).json({ error: "User not found or no changes applied" });
+    }
+    return res.status(200).json({ message: "Account has been suspended" });
+  } catch (error) {
+     return res.status(500).json({ error: "Internal server error" });
+  }
+ }
 
 
 
-
-
-
-
-module.exports = { signInPost, signUpPost, forgetPassword, resetPassword, deactivateAccount }
+module.exports = { signInPost, signUpPost, forgetPassword, resetPassword, deactivateAccount, allUsers,deleteAccount,suspendAccount }

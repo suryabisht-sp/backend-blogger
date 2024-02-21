@@ -37,6 +37,9 @@ const userSchema = new Schema({
     enum: ["user", "Admin"],
     default: "user"
   },
+  concern: {
+    type: String
+  },
   passwordResetTime: { type: Date},
   passResetToken: { type: String },
   status: {
@@ -47,6 +50,9 @@ const userSchema = new Schema({
       type: Boolean,
       default: false
     }
+  },
+  creationDate: {
+    type: Date,
   }
 })
 

@@ -1,6 +1,6 @@
 const express= require( "express")
 const router = express.Router()
-const { signInPost, forgetPassword, resetPassword, deactivateAccount } = require("../controller/userGet")
+const { signInPost, forgetPassword, resetPassword, deactivateAccount, allUsers, suspendAccount, deleteAccount } = require("../controller/userGet")
 const { signUpPost } = require("../controller/userGet.js")
 const { postBlog, editBlog, updateUserProfile, profileDetails } = require("../controller/blog.js")
 const multer = require('multer');
@@ -18,6 +18,7 @@ cb(null, filename)
 
 const upload = multer({ storage: storage })
 
+router.get('/', allUsers )
 router.post("/signin", signInPost)
 router.post("/signup", signUpPost)
 router.post('/upload-blog', upload.single('coverImageUrl'), postBlog);
@@ -27,5 +28,10 @@ router.patch('/edit/:blogId', upload.single('coverImageUrl'), editBlog);
 router.put('/upload-image', upload.single('profilePhoto'), updateUserProfile);
 router.post('/getprofile', profileDetails);
 router.post('/deactivate', deactivateAccount)
+
+//admin api's
+router.post('/admin/suspend', suspendAccount)
+router.delete('/admin/delete', deleteAccount)
+
 
 module.exports= router

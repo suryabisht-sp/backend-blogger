@@ -31,7 +31,7 @@ app.use(cookieParser())
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.get('/', async (req, res) => {
-const allBlogs = await Blog.find({})
+const allBlogs = await Blog.find({}).populate({ path: "createdBy", select: "-password -salt" })
 res.status(200).json({"data":allBlogs})
 })
 app.get('/search', blogSearch)
