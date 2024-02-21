@@ -160,6 +160,9 @@ async function deactivateAccount(req, res, next) {
       return res.status(400).json({ error: "Invalid token format" });
     }    
     const userId = check.payload._id;
+
+    console.log("user id", userId)
+   
     let updateData = {
       "status.deactivate": true
     };
@@ -171,7 +174,12 @@ async function deactivateAccount(req, res, next) {
       // Update the request date
       updateData["status.reqDate"] = futureDate;
     }
+    console.log("falg", flag)
     const result = await userModel.updateOne({ _id: userId }, { $set: updateData });
+    console.log("result", result)
+    if (result.nModified === 0) {
+      return res.status(404).json({ error: "User not found or no changes applied" });
+    }
     return res.status(200).json({ message: "Request for deletion of account is accepted" });
   } catch (error) {
     console.log("error--------------", error);
