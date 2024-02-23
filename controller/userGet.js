@@ -10,7 +10,7 @@ const emailValidator = (email) => {
 
 
 async function allUsers(req, res, next){
-  const result = await userModel.find({}).select('-salt -password').sort({ role: 1 })
+ const result = await userModel.find({}).select('-salt -password').sort({ role: 1 })
   res.status(200).json({"data":result})
 }
 
@@ -117,8 +117,7 @@ async function resetPassword(req, res, next) {
       try {
         const result = await userModel.saveResetPass(email, password)
         if (result) {
-          console.log("email", email)
-          return res.status(200).send({ "msj": "Password changed successfully" })
+           return res.status(200).send({ "msj": "Password changed successfully" })
         }
       } catch (error) {
         console.log("error", error)
@@ -152,7 +151,7 @@ async function resetPassword(req, res, next) {
 async function deactivateAccount(req, res, next) {
   const { flag, token } = req.body;  
   try {
-    if (!token) {
+   if (!token) {
       return res.status(401).json({ error: "Unauthorized" });
     }    
     const check = await validateToken(token);    
@@ -160,8 +159,6 @@ async function deactivateAccount(req, res, next) {
       return res.status(400).json({ error: "Invalid token format" });
     }    
     const userId = check.payload._id;
-
-    console.log("user id", userId)
    
     let updateData = {
       "status.deactivate": true
@@ -174,15 +171,13 @@ async function deactivateAccount(req, res, next) {
       // Update the request date
       updateData["status.reqDate"] = futureDate;
     }
-    console.log("falg", flag)
+   
     const result = await userModel.updateOne({ _id: userId }, { $set: updateData });
-    console.log("result", result)
     if (result.nModified === 0) {
       return res.status(404).json({ error: "User not found or no changes applied" });
     }
     return res.status(200).json({ message: "Request for deletion of account is accepted" });
   } catch (error) {
-    console.log("error--------------", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }
@@ -217,7 +212,6 @@ async function suspendAccount(req, res, next) {
     } 
     
     const user = await userModel.findOne({ _id: id })
-    console.log("user=======", user)
     const userConcern= user.concern
     const userId = check.payload._id;
     if (userConcern === "suspended") {

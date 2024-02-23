@@ -2,7 +2,7 @@ const express= require( "express")
 const router = express.Router()
 const { signInPost, forgetPassword, resetPassword, deactivateAccount, allUsers, suspendAccount, deleteAccount } = require("../controller/userGet")
 const { signUpPost } = require("../controller/userGet.js")
-const { postBlog, editBlog, updateUserProfile, profileDetails } = require("../controller/blog.js")
+const { postBlog, editBlog, updateUserProfile, profileDetails, draftByAdmin } = require("../controller/blog.js")
 const multer = require('multer');
 const path = require("path")
 
@@ -32,6 +32,7 @@ router.post('/deactivate', deactivateAccount)
 //admin api's
 router.post('/admin/suspend', suspendAccount)
 router.delete('/admin/delete', deleteAccount)
+router.patch('/admin/draftblog', draftByAdmin)
 
 
 module.exports= router

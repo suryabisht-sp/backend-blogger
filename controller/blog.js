@@ -60,7 +60,7 @@ async function postBlog(req, res, next) {
 }
 
 async function editBlog(req, res, next) {
-  console.log("contetns", req.body)
+ 
   try {
     const { title, body, createdBy, location, commentsAllowed, publishedDate, publishedTime } = req.body;
     if (!title || !body) {
@@ -172,7 +172,7 @@ async function draftBlog(req, res, next) {
         publishedDate,
         publishedTime,
         draft: true
-      });
+      });      
       return res.status(201).json(result);
     }
   } catch (error) {
@@ -181,8 +181,7 @@ async function draftBlog(req, res, next) {
   }
 }
 const updateUserProfile = async (req, res) => {
-  console.log("Received data from frontend:", req.body);
-  const userId = req.body.userId;
+   const userId = req.body.userId;
   const emailId = req.body.email;
 
   try {
@@ -264,5 +263,37 @@ const profileDetails = async (req, res) => {
   }
 }
 
+async function draftByAdmin(req, res, next) {
+  try {
+    const { id, token } = req.body;
+       if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }    
+    const check = await validateToken(token);    
+    if (!check || !check.payload || !check.payload._id) {
+      return res.status(400).json({ error: "Invalid token format" });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'Id is required field' });
+    }   
+    else if (id) {
+      const blog = await Blog.findOne({ _id: id });
+      const draftStatus = blog?.draft
+      if (draftStatus) { 
+        const updatedBlog = await Blog.findByIdAndUpdate(id, { draft: false }, { new: true });
+           return res.status(201).json(updatedBlog);
+      }
+      else {
+ const updatedBlog = await Blog.findByIdAndUpdate(id, { draft: true }, { new: true });
+      return res.status(201).json(updatedBlog);
+      }
+      
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
 
-module.exports = { getBlogDetail, postComment, postBlog, deletePost, blogSearch, editBlog, deleteComment, editComment, draftBlog, getDraftDetail, getAllBlogsOfUser, updateUserProfile, profileDetails }
+
+module.exports = { getBlogDetail, postComment, postBlog, deletePost, blogSearch, editBlog, deleteComment, editComment, draftBlog, getDraftDetail, getAllBlogsOfUser, updateUserProfile, profileDetails,draftByAdmin }

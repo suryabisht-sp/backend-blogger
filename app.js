@@ -36,8 +36,8 @@ res.status(200).json({"data":allBlogs})
 })
 app.get('/search', blogSearch)
 
-app.use("/user", router)
-app.use("/blog", blog)
+app.use("/api/v1/user", router)
+app.use("/api/v1/blog", blog)
 
 app.use((req, res, next) => {
 res.status(404).json({"msj":"route not found"})
